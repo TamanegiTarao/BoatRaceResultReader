@@ -1,0 +1,13 @@
+D:\WorkSpace\vs\BRRRGitT\BoatRaceResultReader\BoatRaceScraping\bin\Debug\netcoreapp3.1\BoatRaceScraping.exe
+D:\WorkSpace\vs\BRRRGitT\BoatRaceResultReader\BoatRaceScraping\bin\Debug\netcoreapp3.1\BoatRaceScraping.deps.json
+D:\WorkSpace\vs\BRRRGitT\BoatRaceResultReader\BoatRaceScraping\bin\Debug\netcoreapp3.1\BoatRaceScraping.runtimeconfig.json
+D:\WorkSpace\vs\BRRRGitT\BoatRaceResultReader\BoatRaceScraping\bin\Debug\netcoreapp3.1\BoatRaceScraping.runtimeconfig.dev.json
+D:\WorkSpace\vs\BRRRGitT\BoatRaceResultReader\BoatRaceScraping\bin\Debug\netcoreapp3.1\BoatRaceScraping.dll
+D:\WorkSpace\vs\BRRRGitT\BoatRaceResultReader\BoatRaceScraping\bin\Debug\netcoreapp3.1\BoatRaceScraping.pdb
+D:\WorkSpace\vs\BRRRGitT\BoatRaceResultReader\BoatRaceScraping\obj\Debug\netcoreapp3.1\BoatRaceScraping.csprojAssemblyReference.cache
+D:\WorkSpace\vs\BRRRGitT\BoatRaceResultReader\BoatRaceScraping\obj\Debug\netcoreapp3.1\BoatRaceScraping.AssemblyInfoInputs.cache
+D:\WorkSpace\vs\BRRRGitT\BoatRaceResultReader\BoatRaceScraping\obj\Debug\netcoreapp3.1\BoatRaceScraping.AssemblyInfo.cs
+D:\WorkSpace\vs\BRRRGitT\BoatRaceResultReader\BoatRaceScraping\obj\Debug\netcoreapp3.1\BoatRaceScraping.csproj.CoreCompileInputs.cache
+D:\WorkSpace\vs\BRRRGitT\BoatRaceResultReader\BoatRaceScraping\obj\Debug\netcoreapp3.1\BoatRaceScraping.dll
+D:\WorkSpace\vs\BRRRGitT\BoatRaceResultReader\BoatRaceScraping\obj\Debug\netcoreapp3.1\BoatRaceScraping.pdb
+D:\WorkSpace\vs\BRRRGitT\BoatRaceResultReader\BoatRaceScraping\obj\Debug\netcoreapp3.1\BoatRaceScraping.genruntimeconfig.cache
