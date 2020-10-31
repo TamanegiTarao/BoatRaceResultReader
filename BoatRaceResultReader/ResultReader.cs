@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Text;
 using System.IO;
 using System.Linq;
+using System.Text.RegularExpressions;
 
 namespace BoatRaceResultReader
 {
@@ -28,7 +29,6 @@ namespace BoatRaceResultReader
             return rtn;
         }
     }
-
 
     public enum Internode1
     {
@@ -70,6 +70,7 @@ namespace BoatRaceResultReader
         public DateTime Date;
         public int InDay;
         public int RaceNum;
+        public bool Round2;
 
         public Race() { }
 
@@ -276,163 +277,192 @@ namespace BoatRaceResultReader
             return _encSJIS.GetString(rtnBytes);
         }
 
-public void Read(string file)
-{
-    Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
-    using (var sr = new StreamReader(file, Encoding.GetEncoding("shift_jis")))
-    {
-        InternodeTitle internodeTitle = new InternodeTitle();
-        RaceTitle raceTitle;
-        RaceInfo raceInfo = new RaceInfo();
-        RaceResult raceResult = new RaceResult();
-        Race raceBase = new Race();
-        Race race;
-        int inLineInfo = -9999;
-        int inLinePlayer = -9999;
-        int place = 0;
-        bool entryfirst = false;
-        bool nextKakurenSecond = false;
-        bool nextKakurenThired = false;
-        while (sr.EndOfStream == false)
+        private static bool IsStringInDate(string str){ return Regex.IsMatch(str, "..../../.."); }
+
+        private static bool IsStringInInDay(string str){ return Regex.IsMatch(str, "第..日"); }
+
+        private bool IsStringLine7(string str){ return IsStringInDate(str) && IsStringInInDay(str); }
+
+        private bool IsStringInRoundInfo(string str) { return Regex.IsMatch(str, "H1.00m"); }
+
+        private bool IsRound2(string str) { return str.Contains("H1200m"); }
+
+        public void Read(string file)
         {
-            var line = sr.ReadLine();
-
-            if (line.Contains("KBGN"))
-            {   // １.開催場コードの取得
-                place = Lib.IntParse(line.Replace("KBGN", ""));
-                inLineInfo = 0;
-            }
-            else if (inLineInfo == 5) // 文字列を含むかどうかで拾うのがむつかしい
-            {   // ２.節間タイトルを取得
-                // https://csharp-ref.com/program_linq-lambda.html
-                string title = _StringExtraction(line, 10, 50);
-                if (InternodeTitles.Exists(x => x.Title == title))
+            Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+            using (var sr = new StreamReader(file, Encoding.GetEncoding("shift_jis")))
+            {
+                InternodeTitle internodeTitle = new InternodeTitle();
+                RaceTitle raceTitle;
+                RaceInfo raceInfo = new RaceInfo();
+                RaceResult raceResult = new RaceResult();
+                Race raceBase = new Race();
+                Race race;
+                int inLineInfo = -9999;
+                int inLinePlayer = -9999;
+                int place = 0;
+                bool entryfirst = false;
+                bool nextKakurenSecond = false;
+                bool nextKakurenThired = false;
+                bool start = false;
+                while (sr.EndOfStream == false)
                 {
-                    internodeTitle = InternodeTitles.OrderBy(x => x.Start).FirstOrDefault();
-                    entryfirst = false;
-                }
-                else
-                {
-                    internodeTitle = new InternodeTitle();
-                    internodeTitle.Title = title;
-                    entryfirst = true;
-                    InternodeTitles.Add(internodeTitle);
-                }
-            }
-            else if (inLineInfo == 7)// 文字列を含むかどうかで拾うのがむつかしい
-            {   // ３.節間日、開催年月日の取得
-                raceBase.Place = place;
-                raceBase.InDay = Lib.IntParse(_StringExtraction(line, 5, 2));
-                DateTime dateTime = new DateTime(Lib.IntParse(_StringExtraction(line, 19, 4)),
-                                                    Lib.IntParse(_StringExtraction(line, 24, 2)),
-                                                    Lib.IntParse(_StringExtraction(line, 27, 2)));
-                raceBase.Date = dateTime;
-                if (entryfirst)
-                    internodeTitle.Start = dateTime;
-                internodeTitle.End = dateTime;
-
-            }
-            else if (line.Contains("H1800m"))
-            {   // ４.レース番号、レースタイトル、風向、風速の取得
-                race = raceBase.Clone();
-                race.RaceNum = Lib.IntParse(_StringExtraction(line, 2, 2));
-                // レースタイトル
-                var title = _StringExtraction(line, 12, 12);
-                if (RaceTitles.Exists(x => x.Title == title))
-                {
-                    raceTitle = RaceTitles.Where(x => x.Title == title).FirstOrDefault();
-                }
-                else
-                {
-                    raceTitle = new RaceTitle() { Title = title };
-                    RaceTitles.Add(raceTitle);
-                }
-                // レース情報
-                raceInfo = new RaceInfo();
-                raceResult = new RaceResult();
-                raceInfo.WindDirectionSet(_StringExtraction(line, 59, 6));
-                raceInfo.WindMetor = Lib.IntParse(_StringExtraction(line, 65, 2));
-                raceInfo.RaceTitle = raceTitle;
-                raceInfo.Race = race;
-                raceInfo.RaceResult = raceResult;
-                raceInfo.InternodeTitle = internodeTitle;
-            }
-            else if (line.Contains(" 着 艇 登番 　選　手　名　　ﾓｰﾀｰ ﾎﾞｰﾄ 展示 進入 ｽﾀｰﾄﾀｲﾐﾝｸ ﾚｰｽﾀｲﾑ"))
-            {   // ５.決まり手の取得
-                raceInfo.KimariteSet(_StringExtraction(line, 66, 10));
-                inLinePlayer = -1; // この次の行が --------------だから
-            }
-            else if (1 <= inLinePlayer && inLinePlayer <= 6)// 文字列を含むかどうかで拾うのがむつかしい
-            {   // ６.選手結果の取得
-                PlayerResult adder = new PlayerResult();
-                adder.RaceInfo = raceInfo;
-                adder.Number = Lib.IntParse(_StringExtraction(line, 8, 4));
-                adder.Result = PlayerResult.ResultNumber(_StringExtraction(line, 2, 3));
-                adder.Wakuban = Lib.IntParse(_StringExtraction(line, 6, 1));
-                adder.Cource = Lib.IntParse(_StringExtraction(line, 46, 1));
-                adder.Motor = Lib.IntParse(_StringExtraction(line, 30, 2));
-                adder.Boat = Lib.IntParse(_StringExtraction(line, 34, 3));
-                adder.Tenji = Lib.DoubleParse(_StringExtraction(line, 39, 4));
-                adder.Start = Lib.DoubleParse(_StringExtraction(line, 51, 4));
-                PlayerResults.Add(adder);
-            }
-            else if (6 < inLinePlayer && !line.Contains("不成立"))
-            {   // ←７.レース結果の取得
-                if (line.Contains("単勝"))
-                {   // ここの特払い、傾向つかめれば統一したい。
-                    if (line.Contains("特払い"))
-                    {
-                        raceResult.Tansho.First = -1;
-                        raceResult.Tansho.Yen = Lib.IntParse(_StringExtraction(line, 27, 4));
+                    var line = sr.ReadLine();
+                    
+                    if (line.Contains("KBGN"))
+                    {   // １.開催場コードの取得
+                        place = Lib.IntParse(line.Replace("KBGN", ""));
+                        inLineInfo = 0;
+                        start = true;
                     }
-                    else
+                    else if(line.Contains("KEND"))
                     {
-                        raceResult.Tansho.First = Lib.IntParse(_StringExtraction(line, 17, 1));
-                        raceResult.Tansho.Yen = Lib.IntParse(_StringExtraction(line, 25, 6));
+                        inLineInfo = 0;
+                        start = false;
                     }
+                    else if(start)
+                    {
+                        if (inLineInfo == 5) // 文字列を含むかどうかで拾うのがむつかしい
+                        {   // ２.節間タイトルを取得
+                            // https://csharp-ref.com/program_linq-lambda.html
+                            string title = _StringExtraction(line, 10, 50);
+                            if (InternodeTitles.Exists(x => x.Title == title))
+                            {
+                                internodeTitle = InternodeTitles.OrderBy(x => x.Start).FirstOrDefault();
+                                entryfirst = false;
+                            }
+                            else
+                            {
+                                internodeTitle = new InternodeTitle();
+                                internodeTitle.Title = title;
+                                entryfirst = true;
+                                InternodeTitles.Add(internodeTitle);
+                            }
+                        }
+                        else if (inLineInfo == 7)// 文字列を含むかどうかで拾うのがむつかしい
+                        {   // ３.節間日、開催年月日の取得
+                            if (IsStringLine7(line))
+                            {
+                                raceBase.Place = place;
+                                raceBase.InDay = Lib.IntParse(_StringExtraction(line, 5, 2));
 
-                }
-                if (line.Contains("複勝"))
-                {
-                    raceResult.Fukusho1.First = Lib.IntParse(_StringExtraction(line, 17, 1));
-                    raceResult.Fukusho1.Yen = Lib.IntParse(_StringExtraction(line, 25, 6));
-                    raceResult.Fukusho2.First = Lib.IntParse(_StringExtraction(line, 33, 1));
-                    raceResult.Fukusho2.Yen = Lib.IntParse(_StringExtraction(line, 41, 6));
-                }
-                if (line.Contains("２連単") || line.Contains("２連複") || line.Contains("各連複") ||
-                    nextKakurenSecond || nextKakurenThired)
-                {
-                    ResultTwo res = line.Contains("２連単") ? raceResult.NirenTan :
-                                    line.Contains("２連複") ? raceResult.NirenFuku :
-                                    line.Contains("各連複") ? raceResult.Kakuren1 :
-                                    nextKakurenSecond ? raceResult.Kakuren2 : raceResult.Kakuren3;
+                                DateTime dateTime = new DateTime(Lib.IntParse(_StringExtraction(line, 19, 4)),
+                                                                    Lib.IntParse(_StringExtraction(line, 24, 2)),
+                                                                    Lib.IntParse(_StringExtraction(line, 27, 2)));
+                                raceBase.Date = dateTime;
+                                if (entryfirst)
+                                    internodeTitle.Start = dateTime;
+                                internodeTitle.End = dateTime;
+                            }
+                            else
+                            {
+                                Console.WriteLine("Error:" + line + " " + raceBase.Date.ToString("yyyyMMdd"));
+                            }
 
-                    res.First = Lib.IntParse(_StringExtraction(line, 17, 1));
-                    res.Second = Lib.IntParse(_StringExtraction(line, 19, 1));
-                    res.Yen = Lib.IntParse(_StringExtraction(line, 25, 6));
-                    res.Popler = Lib.IntParse(_StringExtraction(line, 40, 3));
-                    // 各連複の２．３番目は取れないので
-                    nextKakurenSecond = res == raceResult.Kakuren1 ? true : false;
-                    nextKakurenThired = res == raceResult.Kakuren2 ? true : false;
-                }
-                if (line.Contains("３連単") || line.Contains("３連複"))
-                {
-                    ResultThree res = line.Contains("３連単") ? raceResult.SanrenTan : raceResult.SanrenFuku;
+                        }
+                        else if (IsStringInRoundInfo(line))
+                        {   // ４.レース番号、レースタイトル、風向、風速の取得
+                            race = raceBase.Clone();
+                            race.RaceNum = Lib.IntParse(_StringExtraction(line, 2, 2));
+                            race.Round2 = IsRound2(line);
+                            // レースタイトル
+                            var title = _StringExtraction(line, 12, 12);
+                            if (RaceTitles.Exists(x => x.Title == title))
+                            {
+                                raceTitle = RaceTitles.Where(x => x.Title == title).FirstOrDefault();
+                            }
+                            else
+                            {
+                                raceTitle = new RaceTitle() { Title = title };
+                                RaceTitles.Add(raceTitle);
+                            }
+                            // レース情報
+                            raceInfo = new RaceInfo();
+                            raceResult = new RaceResult();
+                            raceInfo.WindDirectionSet(_StringExtraction(line, 59, 6));
+                            raceInfo.WindMetor = Lib.IntParse(_StringExtraction(line, 65, 2));
+                            raceInfo.RaceTitle = raceTitle;
+                            raceInfo.Race = race;
+                            raceInfo.RaceResult = raceResult;
+                            raceInfo.InternodeTitle = internodeTitle;
+                        }
+                        else if (line.Contains(" 着 艇 登番 　選　手　名　　ﾓｰﾀｰ ﾎﾞｰﾄ 展示 進入 ｽﾀｰﾄﾀｲﾐﾝｸ ﾚｰｽﾀｲﾑ"))
+                        {   // ５.決まり手の取得
+                            raceInfo.KimariteSet(_StringExtraction(line, 66, 10));
+                            inLinePlayer = -1; // この次の行が --------------だから
+                        }
+                        else if (1 <= inLinePlayer && inLinePlayer <= 6)// 文字列を含むかどうかで拾うのがむつかしい
+                        {   // ６.選手結果の取得
+                            PlayerResult adder = new PlayerResult();
+                            adder.RaceInfo = raceInfo;
+                            adder.Number = Lib.IntParse(_StringExtraction(line, 8, 4));
+                            adder.Result = PlayerResult.ResultNumber(_StringExtraction(line, 2, 3));
+                            adder.Wakuban = Lib.IntParse(_StringExtraction(line, 6, 1));
+                            adder.Cource = Lib.IntParse(_StringExtraction(line, 46, 1));
+                            adder.Motor = Lib.IntParse(_StringExtraction(line, 30, 2));
+                            adder.Boat = Lib.IntParse(_StringExtraction(line, 34, 3));
+                            adder.Tenji = Lib.DoubleParse(_StringExtraction(line, 39, 4));
+                            adder.Start = Lib.DoubleParse(_StringExtraction(line, 51, 4));
+                            PlayerResults.Add(adder);
+                        }
+                        else if (6 < inLinePlayer && !line.Contains("不成立"))
+                        {   // ←７.レース結果の取得
+                            if (line.Contains("単勝"))
+                            {   // ここの特払い、傾向つかめれば統一したい。
+                                if (line.Contains("特払い"))
+                                {
+                                    raceResult.Tansho.First = -1;
+                                    raceResult.Tansho.Yen = Lib.IntParse(_StringExtraction(line, 27, 4));
+                                }
+                                else
+                                {
+                                    raceResult.Tansho.First = Lib.IntParse(_StringExtraction(line, 17, 1));
+                                    raceResult.Tansho.Yen = Lib.IntParse(_StringExtraction(line, 25, 6));
+                                }
 
-                    res.First = Lib.IntParse(_StringExtraction(line, 17, 1));
-                    res.Second = Lib.IntParse(_StringExtraction(line, 19, 1));
-                    res.Thired = Lib.IntParse(_StringExtraction(line, 21, 1));
-                    res.Yen = Lib.IntParse(_StringExtraction(line, 25, 6));
-                    res.Popler = Lib.IntParse(_StringExtraction(line, 40, 3));
-                    if (res == raceResult.SanrenFuku)
-                        inLinePlayer = -9999;
+                            }
+                            if (line.Contains("複勝"))
+                            {
+                                raceResult.Fukusho1.First = Lib.IntParse(_StringExtraction(line, 17, 1));
+                                raceResult.Fukusho1.Yen = Lib.IntParse(_StringExtraction(line, 25, 6));
+                                raceResult.Fukusho2.First = Lib.IntParse(_StringExtraction(line, 33, 1));
+                                raceResult.Fukusho2.Yen = Lib.IntParse(_StringExtraction(line, 41, 6));
+                            }
+                            if (line.Contains("２連単") || line.Contains("２連複") || line.Contains("各連複") ||
+                                nextKakurenSecond || nextKakurenThired)
+                            {
+                                ResultTwo res = line.Contains("２連単") ? raceResult.NirenTan :
+                                                line.Contains("２連複") ? raceResult.NirenFuku :
+                                                line.Contains("各連複") ? raceResult.Kakuren1 :
+                                                nextKakurenSecond ? raceResult.Kakuren2 : raceResult.Kakuren3;
+
+                                res.First = Lib.IntParse(_StringExtraction(line, 17, 1));
+                                res.Second = Lib.IntParse(_StringExtraction(line, 19, 1));
+                                res.Yen = Lib.IntParse(_StringExtraction(line, 25, 6));
+                                res.Popler = Lib.IntParse(_StringExtraction(line, 40, 3));
+                                // 各連複の２．３番目は取れないので
+                                nextKakurenSecond = res == raceResult.Kakuren1 ? true : false;
+                                nextKakurenThired = res == raceResult.Kakuren2 ? true : false;
+                            }
+                            if (line.Contains("３連単") || line.Contains("３連複"))
+                            {
+                                ResultThree res = line.Contains("３連単") ? raceResult.SanrenTan : raceResult.SanrenFuku;
+
+                                res.First = Lib.IntParse(_StringExtraction(line, 17, 1));
+                                res.Second = Lib.IntParse(_StringExtraction(line, 19, 1));
+                                res.Thired = Lib.IntParse(_StringExtraction(line, 21, 1));
+                                res.Yen = Lib.IntParse(_StringExtraction(line, 25, 6));
+                                res.Popler = Lib.IntParse(_StringExtraction(line, 40, 3));
+                                if (res == raceResult.SanrenFuku)
+                                    inLinePlayer = -9999;
+                            }
+                        }
+                    }
+                    inLinePlayer++;
+                    inLineInfo++;
                 }
             }
-            inLinePlayer++;
-            inLineInfo++;
         }
-    }
-}
 
         public void PlayerResultPrint()
         {

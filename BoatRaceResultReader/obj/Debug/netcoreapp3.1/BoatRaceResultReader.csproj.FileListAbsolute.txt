@@ -1,0 +1,13 @@
+D:\WorkSpace\vs\BRRRGitT\BoatRaceResultReader\BoatRaceResultReader\bin\Debug\netcoreapp3.1\BoatRaceResultReader.exe
+D:\WorkSpace\vs\BRRRGitT\BoatRaceResultReader\BoatRaceResultReader\bin\Debug\netcoreapp3.1\BoatRaceResultReader.deps.json
+D:\WorkSpace\vs\BRRRGitT\BoatRaceResultReader\BoatRaceResultReader\bin\Debug\netcoreapp3.1\BoatRaceResultReader.runtimeconfig.json
+D:\WorkSpace\vs\BRRRGitT\BoatRaceResultReader\BoatRaceResultReader\bin\Debug\netcoreapp3.1\BoatRaceResultReader.runtimeconfig.dev.json
+D:\WorkSpace\vs\BRRRGitT\BoatRaceResultReader\BoatRaceResultReader\bin\Debug\netcoreapp3.1\BoatRaceResultReader.dll
+D:\WorkSpace\vs\BRRRGitT\BoatRaceResultReader\BoatRaceResultReader\bin\Debug\netcoreapp3.1\BoatRaceResultReader.pdb
+D:\WorkSpace\vs\BRRRGitT\BoatRaceResultReader\BoatRaceResultReader\obj\Debug\netcoreapp3.1\BoatRaceResultReader.csprojAssemblyReference.cache
+D:\WorkSpace\vs\BRRRGitT\BoatRaceResultReader\BoatRaceResultReader\obj\Debug\netcoreapp3.1\BoatRaceResultReader.AssemblyInfoInputs.cache
+D:\WorkSpace\vs\BRRRGitT\BoatRaceResultReader\BoatRaceResultReader\obj\Debug\netcoreapp3.1\BoatRaceResultReader.AssemblyInfo.cs
+D:\WorkSpace\vs\BRRRGitT\BoatRaceResultReader\BoatRaceResultReader\obj\Debug\netcoreapp3.1\BoatRaceResultReader.csproj.CoreCompileInputs.cache
+D:\WorkSpace\vs\BRRRGitT\BoatRaceResultReader\BoatRaceResultReader\obj\Debug\netcoreapp3.1\BoatRaceResultReader.dll
+D:\WorkSpace\vs\BRRRGitT\BoatRaceResultReader\BoatRaceResultReader\obj\Debug\netcoreapp3.1\BoatRaceResultReader.pdb
+D:\WorkSpace\vs\BRRRGitT\BoatRaceResultReader\BoatRaceResultReader\obj\Debug\netcoreapp3.1\BoatRaceResultReader.genruntimeconfig.cache
